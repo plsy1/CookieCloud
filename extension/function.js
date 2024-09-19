@@ -33,36 +33,9 @@ export async function browser_remove( key )
 
 
 
-export async function storage_set( key, value )
-{
-    return new Promise((resolve, reject) => {
-        chrome.storage.local.set( {[key]:value}, function () {
-          return resolve(true);
-        });
-      });
-}
 
-export async function storage_get( key )
-{
-    return new Promise((resolve, reject) => {
-        chrome.storage.local.get([key], function (result) {
-          if (result[key] === undefined) {
-            resolve(null);
-          } else {
-            resolve(result[key]);
-          }
-        });
-      });
-}
 
-export async function storage_remove( key )
-{
-    return new Promise((resolve, reject) => {
-        chrome.storage.local.remove([key], function (result) {
-            resolve(result);
-        });
-      });
-}
+
 
 export async function browser_load_all(prefix=null)
 {
@@ -86,29 +59,6 @@ export async function browser_load_all(prefix=null)
 
 
 
-
-export async function load_all(prefix=null)
-{
-    return new Promise((resolve, reject) => {
-        chrome.storage.local.get(null, function (result) {
-            let ret = result;
-            // 只返回以prefix开头的key对应的属性
-            if( prefix )
-            {
-                ret = {};
-                for( let key in result )
-                {
-                    if( key.startsWith(prefix) )
-                    {
-                        // remove prefix from key
-                        ret[key.substring(prefix.length)] = JSON.parse(result[key])??result[key];
-                    }
-                }
-            }
-            resolve(ret);
-        });
-      });
-}
 
 export async function load_data( key  )
 {
@@ -142,7 +92,6 @@ export async function upload_cookie( payload )
     // none of the fields can be empty
     if (!password || !uuid) {
         alert("错误的参数");
-        showBadge("err");
         return false;
     }
     const domains = payload['domains']?.trim().length > 0 ? payload['domains']?.trim().split("\n") : [];
@@ -164,13 +113,12 @@ export async function upload_cookie( payload )
                     headers[extraHeaderPairKV[0]] = extraHeaderPairKV[1];
                 } else {
                     console.log("error", "解析 header 错误: ", extraHeaderPair);
-                    showBadge("fail", "orange");
                 }
             })
         }
     } catch (error) {
         console.log("error", error);
-        showBadge("err");
+
         return false;
     } 
     // 用aes对cookie进行加密
@@ -196,7 +144,6 @@ export async function upload_cookie( payload )
     };
     // console.log( endpoint, payload2 );
     try {
-        showBadge("↑", "green");
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: headers,
@@ -210,7 +157,7 @@ export async function upload_cookie( payload )
         return result;
     } catch (error) {
         console.log("error", error);
-        showBadge("err");
+      
         return false;
     }  
 }
@@ -220,7 +167,7 @@ export async function download_cookie(payload)
     const { uuid, password, expire_minutes } = payload;
     const endpoint = payload['endpoint'].trim().replace(/\/+$/, '')+'/get/'+uuid;
     try {
-        showBadge("↓", "blue");
+
         const response = await fetch(endpoint, {
             method: 'GET',
             headers: {
@@ -268,7 +215,7 @@ export async function download_cookie(payload)
                                 const set_ret = await browser.cookies.set(new_cookie);
                                     console.log("set cookie", set_ret);
                             } catch (error) {
-                                showBadge("err");
+                         
                                 console.log("set cookie error", error);
                             }
                             
@@ -296,7 +243,7 @@ export async function download_cookie(payload)
         }
     } catch (error) {
         console.log("error", error);
-        showBadge("err");
+ 
         return false;
     }
 }
@@ -405,10 +352,3 @@ export function sleep(ms) {
     });
 }
 
-export function showBadge(text, color = "red", delay = 5000) {
-    chrome.action.setBadgeText({text:text});
-    chrome.action.setBadgeBackgroundColor({color:color});
-    setTimeout(() => {
-        chrome.action.setBadgeText({ text: '' });
-    }, delay);
-}
